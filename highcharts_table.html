@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>HighCharts Table Plot</title>
+		<script src="jquery-1.9.1.min.js"></script>
+		<script src="highcharts.js"></script>
+		<script src="highcharts-more.js"></script>
+		<script src="jquery.csv-0.71.min.js"></script>
+		<script type="text/javascript">
+			/*var rows = CSV.parse("one,two,three\n4,5,6");
+			console.log(JSON.stringify(rows, null, " "));*/
+			var res_pos=new Array();
+			var res_neg=new Array();
+			var line=new Array();
+			var col=new Array();
+			var val=new Array();
+			var cpt=0;
+			var chart;
+			
+			function genVar() {
+			
+				$.ajax({
+					url: "trajCountries.csv",
+					dataType: 'text',
+					cache: false
+				}).done(function(csvAsString){
+					csvAsArray=$.csv.toArrays(csvAsString,{delimiter:'"',separator:',',});
+					csvAsArray[0].shift();
+					line = csvAsArray[0];
+					for (var i=1;i<csvAsArray.length;i++) {
+						col.push(csvAsArray[i][0]);
+						for (var j=1;j<csvAsArray[i].length;j++) {
+							val.push(Math.round(parseFloat(csvAsArray[i][j]*100))/100);
+						}
+					};
+					
+					for (var i=0;i<col.length;i++) {
+						for (var j=0;j<line.length;j++) {
+							if (val[cpt]<0) {
+								/*res_neg[cpt_neg]=[j,i,Math.abs(Math.round(val[cpt]*100)/100)];
+								cpt_neg++;*/
+								res_neg.push([j,i,Math.abs(val[cpt])]);
+							}
+							else {
+								/*res_pos[cpt_pos]=[j,i,Math.abs(Math.round(val[cpt]*100)/100)];
+								cpt_pos++;*/
+								res_pos.push([j,i,val[cpt]]);
+							}
+							cpt++;
+						};
+					};
+						
+					chart = new Highcharts.Chart({
+						chart: {
+							renderTo: 'container',
+							type: 'bubble',
+							plotBorderWidth: 1,
+							zoomType: 'xy',
+							width:600
+						},
+
+						title: {
+							text: 'Table Plot'
+						},
+					
+						tooltip: {
+							formatter: function() {
+								var s = line[this.x-1]+" , "+col[this.y]+"<br><b>"+this.point.z+"</b></br>";
+							
+								return s;
+							},
+						
+						},
+
+						xAxis: {
+							min:0,
+							max:line.length-1,
+							categories:line,
+							title: {
+								text: "Trajectories"
+							},
+							gridLineWidth:1,
+							endOnTick:false
+						},
+						
+						yAxis: {
+							min:-0.5,
+							max:col.length-0.5,
+							startOnTick:false,
+							endOnTick:false,
+							categories:col,
+							title: {
+								text: "Countries"
+							}
+						},
+
+						series: [
+							{
+								data: res_pos,
+								color:'#EF8A62',
+								name: 'Positive'
+							},
+							{
+								data: res_neg,
+								color:'#67A9CF',
+								name: 'Negative'
+							}
+						]
+
+				});
+			});
+		}
+						
+		</script>
+	</head>
+	<body class="HighCharts Table Plot">
+		<div id="container"></div>
+		<button onclick="genVar()">Generate Graphic</button>
+	</body>
+</html>
+		
