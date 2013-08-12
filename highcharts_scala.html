@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>HighCharts Rank Size</title>
+		<script src="jquery-1.9.1.min.js"></script>
+		<script src="highcharts.js"></script>
+		<script src="highcharts-more.js"></script>
+		<script src="jquery.csv-0.71.min.js"></script>
+		<script src="/tmp/marius.js"></script>
+		<script type="text/javascript">
+			/*var rows = CSV.parse("one,two,three\n4,5,6");
+			console.log(JSON.stringify(rows, null, " "));*/
+			var real=new Array();
+			var simu=new Array();
+			var chart;
+			
+			function genVar() {
+			
+			chart = new Highcharts.Chart({
+							chart: {
+								renderTo: 'container',
+								width:400,
+								height:500,
+								zoomType: 'xy'	
+							},
+					
+							plotOptions: {
+								line: {
+									lineWidth:0.5,
+									marker: {
+										symbol:"triangle",
+										radius:1
+									}	
+								}
+							},
+            
+							title: {
+								text: 'Evolution of the rank size distribution',
+								style: {
+									color: "black"
+								}
+							},
+            
+							xAxis: {
+								type: 'logarithmic',
+								minortickInterval: 0.1,
+								title: {
+									text: "Rank",
+									style: {
+										color: "black",
+										fontSize: '11px',
+										fontWeight: 'normal'
+									}
+								},
+								labels: {
+									formatter: function() {
+										return this.value;
+									}
+								}
+							},
+            
+							yAxis: {
+								type: 'logarithmic',
+								minorTickInterval: 0.1,
+								title: {
+									text: "Population (thousand)",
+									style: {
+										color:"black",
+										fontSize:'11px',
+										fontWeight:'normal'
+									}
+								},
+								labels: {
+									formatter: function() {
+										return this.value;
+									}
+								}
+							},
+            
+							tooltip: {
+								headerFormat: '<b>{series.name}</b><br />',
+								pointFormat: 'x = {point.x}, y = {point.y}'
+							},
+            
+							series: []
+								
+			}	);
+			
+		$.when(getReal(),getSimu())
+				.done (function() {
+					chart.redraw();
+				
+							
+			});
+	//	};
+			
+			function getReal() {
+					chart.addSeries({data: valeursReal[0].population,
+									pointStart: 1,
+									name: 'Observed'},false);
+				};
+			
+			function getSimu() {
+					for (var i=0;i<valeursSimu.length;i++) {
+						chart.addSeries({data: valeursSimu[i].population,
+										pointStart: 1},false);
+					}
+				}
+			};
+			
+			
+			
+			
+
+		</script>
+				
+	</head>
+	<body class="HighCharts Rank Size">
+		<div id="container"></div>
+		<button onclick="genVar()">Generate Graphic</button>
+	</body>
+</html>
