@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>HighCharts Urban Population</title>
+		<script src="jquery-1.9.1.min.js"></script>
+		<script src="highcharts.js"></script>
+		<script src="highcharts-more.js"></script>
+		<script src="jquery.csv-0.71.min.js"></script>
+		<script type="text/javascript">
+			/*var rows = CSV.parse("one,two,three\n4,5,6");
+			console.log(JSON.stringify(rows, null, " "));*/
+			var real=new Array();
+			var simu=new Array();
+			var chart;
+			var select;
+			var tauxVar;
+			
+			function genVar() {
+			
+			select = document.getElementById("taux" );
+			tauxVar = parseInt(select.options[select.selectedIndex].value);
+			
+			chart = new Highcharts.Chart({
+							chart: {
+								renderTo: 'container',
+								width:400,
+								height:500,
+								zoomType: 'xy'	
+							},
+					
+							plotOptions: {
+								line: {
+									lineWidth:0.5,
+									marker: {
+										symbol:"triangle",
+										radius:1
+									}	
+								}
+							},
+            
+							title: {
+								text: 'Evolution of the urban population',
+								style: {
+									color: "black"
+								}
+							},
+            
+							xAxis: {
+								type: 'datetime',
+								minortickInterval: 0.1,
+								title: {
+									text: "Year",
+									style: {
+										color: "black",
+										fontSize: '11px',
+										fontWeight: 'normal'
+									}
+								},
+								labels: {
+									formatter: function() {
+										return this.value;
+									}
+								}
+							},
+            
+							yAxis: {
+								title: {
+									text: "Percentage",
+									style: {
+										color:"black",
+										fontSize:'11px',
+										fontWeight:'normal'
+									}
+								},
+								labels: {
+									formatter: function() {
+										return this.value;
+									}
+								}
+							},
+            
+							tooltip: {
+								headerFormat: '<b>{series.name}</b><br />',
+								pointFormat: 'x = {point.x}, y = {point.y}'
+							},
+            
+							series: []
+								
+			}	);
+			
+		$.when(getReal(),getSimu())
+					.done (function() {
+						chart.redraw();
+				
+							
+			});
+		};
+			
+			function getReal() {
+				return $.ajax({
+					url: "marius_real.csv",
+					dataType: 'text',
+					cache: false
+				}).done(function(csvAsString){
+					csvAsArray=$.csv.toArrays(csvAsString,{delimiter:'"',separator:';',});
+					var tot;
+					var coeff;
+					var coeffTab = new Array();
+					real=[[1970,0],[1979,0],[1989,0],[2002,0],[2010,0]];
+					for (var i=0;i<5;i++) {
+						tot=0;
+						for (var j=0;j<csvAsArray.length;j++) {
+							if (isNaN(csvAsArray[j][12+i])==false) {
+								tot += Math.round(parseFloat(csvAsArray[j][13+i]*100))/100;
+							}	
+						}
+						real[i][1]=Math.round(tot*100)/100;
+					}
+					for (var i=1;i<real.length;i++) {
+						coeff=(Math.pow(real[i][1]/real[i-1][1],1/(real[i][0]-real[i-1][0]))-1)*100;
+						coeffTab[i-1]=[real[i][0],coeff];
+					};
+					
+					chart.addSeries({data: coeffTab,
+									name: 'Observed'
+									,marker: {radius: 3}},false);
+				})
+			};
+			
+			function getSimu() {
+				return $.ajax({
+					url: "marius_evol.csv",
+					dataType: 'text',
+					cache: false
+				}).done(function(csvAsString){
+					csvAsArray=$.csv.toArrays(csvAsString,{separator:';',});
+					var annee=1970;
+					var tot;
+					var res=new Array();
+					for (var i=0;i<csvAsArray.length;i++) {
+						tot=0;
+						for (var j=1;j<csvAsArray[i].length;j++) {
+							tot += Math.round(parseFloat(csvAsArray[i][j]*100))/100;
+						}
+						simu[i]=[annee+i,Math.round(tot*100)/100];
+					}
+					
+					for (var i=0+tauxVar;i<simu.length;i=i+tauxVar) {
+						res.push([simu[i][0],(Math.pow((simu[i][1]/simu[i-tauxVar][1]),1/(simu[i][0]-simu[i-tauxVar][0]))-1)*100]);
+						//res[i-1]=[simu[i][0],((simu[i][1]-simu[i-1][1])/simu[i-1][1])*100];
+					};
+					chart.addSeries({data: res,
+											name: 'Simulated'},
+											false);
+					
+										
+										
+				});
+			}
+			
+			
+
+		</script>
+				
+	</head>
+	<body class="HighCharts Rate Evolution">
+		<div id="container"></div>
+		<SELECT id="taux">
+			<OPTION VALUE="">Taux de variation sur
+			<OPTION VALUE=1>Un an
+			<OPTION VALUE=10>Dix ans
+		</SELECT>
+		<button onclick="genVar()">Generate Graphic</button>
+	</body>
+</html>

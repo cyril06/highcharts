@@ -2,12 +2,11 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>HighCharts Rank Size</title>
+        <title>HighCharts Urban Population</title>
 		<script src="jquery-1.9.1.min.js"></script>
 		<script src="highcharts.js"></script>
 		<script src="highcharts-more.js"></script>
 		<script src="jquery.csv-0.71.min.js"></script>
-		<script src="../files/rangtaille.js"></script>
 		<script type="text/javascript">
 			/*var rows = CSV.parse("one,two,three\n4,5,6");
 			console.log(JSON.stringify(rows, null, " "));*/
@@ -36,17 +35,17 @@
 							},
             
 							title: {
-								text: 'Evolution of the rank size distribution',
+								text: 'Evolution of the urban population',
 								style: {
 									color: "black"
 								}
 							},
             
 							xAxis: {
-								type: 'logarithmic',
+								type: 'datetime',
 								minortickInterval: 0.1,
 								title: {
-									text: "Rank",
+									text: "Year",
 									style: {
 										color: "black",
 										fontSize: '11px',
@@ -61,8 +60,6 @@
 							},
             
 							yAxis: {
-								type: 'logarithmic',
-								minorTickInterval: 0.1,
 								title: {
 									text: "Population (thousand)",
 									style: {
@@ -88,35 +85,76 @@
 			}	);
 			
 		$.when(getReal(),getSimu())
-				.done (function() {
-					chart.redraw();
+					.done (function() {
+						chart.redraw();
 				
 							
 			});
-	//	};
+		};
 			
 			function getReal() {
-					chart.addSeries({data: valeursReal[0].population,
-									pointStart: 1,
-									name: 'Observed'},false);
-				};
-			
-			function getSimu() {
-					for (var i=0;i<valeursSimu.length;i++) {
-						chart.addSeries({data: valeursSimu[i].population,
-										pointStart: 1},false);
+				return $.ajax({
+					url: "marius_real.csv",
+					dataType: 'text',
+					cache: false
+				}).done(function(csvAsString){
+					csvAsArray=$.csv.toArrays(csvAsString,{delimiter:'"',separator:';',});
+					var tot;
+					real=[[1970,0],[1979,0],[1989,0],[2002,0],[2010,0]];
+					for (var i=0;i<5;i++) {
+						tot=0;
+						for (var j=0;j<csvAsArray.length;j++) {
+							if (isNaN(csvAsArray[j][12+i])==false) {
+								tot += Math.round(parseFloat(csvAsArray[j][13+i]*100))/100;
+							}	
+						}
+						real[i][1]=Math.round(tot*100)/100;
 					}
-				}
+
+					chart.addSeries({data: real,
+									name: 'Observed'},false);
+				})
 			};
 			
-			
+			function getSimu() {
+				return $.ajax({
+					url: "marius_pop.csv",
+					dataType: 'text',
+					cache: false
+				}).done(function(csvAsString){
+					csvAsArray=$.csv.toArrays(csvAsString,{separator:';',});
+					var annee;
+					var tot;
+					var k;
+					for (var i=0;i<csvAsArray.length;i++) {
+						if (csvAsArray[i][0]==0) {
+							annee=1970;
+							k=0;
+							simu=new Array();
+						}
+						tot=0;
+						for (var j=1;j<csvAsArray[i].length;j++) {
+							tot += Math.round(parseFloat(csvAsArray[i][j]*100))/100;
+						}
+						simu[k]=[annee+k,Math.round(tot*100)/100];
+						k+=1;
+					
+						if (csvAsArray[i][0]==49) {
+							chart.addSeries({data: simu,
+												name: 'Simulated'},false);
+						};
+										
+					}
+										
+				});
+			}
 			
 			
 
 		</script>
 				
 	</head>
-	<body class="HighCharts Rank Size">
+	<body class="HighCharts Population Evolution">
 		<div id="container"></div>
 		<button onclick="genVar()">Generate Graphic</button>
 	</body>
